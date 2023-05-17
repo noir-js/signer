@@ -1,5 +1,5 @@
 {
-  "name": "@noir/_template",
+  "name": "@noir/signer",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
@@ -35,5 +35,10 @@
     "tsup": "^6.5.0",
     "typescript": "^4.9.5",
     "vitest": "^0.31.0"
+  },
+  "dependencies": {
+    "@noir/util": "github:noir-js/util",
+    "@polkadot/types": "^10.7.1",
+    "@polkadot/util-crypto": "^12.2.1"
   }
 }
