@@ -1,12 +1,16 @@
 // Copyright (C) 2023 Haderech Pte. Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { HexString } from '@noir/util/types';
 import type { Registry, Signer, SignerPayloadRaw, SignerResult } from '@polkadot/types/types';
 
-import { compactAddLength, hexToU8a, isU8a, stringToU8a, u8aConcat } from '@noir/util';
+import { Binary } from '@noir/types';
+import { compactAddLength, hexToU8a, u8aConcat } from '@noir/util';
 import { blake2AsU8a } from '@polkadot/util-crypto';
 
 let id = 0;
+
+type BinaryLike = Uint8Array | HexString | string;
 
 export class WebAuthnSigner implements Signer {
   readonly #registry: Registry;
@@ -14,17 +18,12 @@ export class WebAuthnSigner implements Signer {
   readonly address: string;
   readonly addressRaw: Uint8Array;
 
-  constructor (registry: Registry, credentialId: Uint8Array | string, publicKey: Uint8Array | string) {
+  constructor (registry: Registry, credentialId: BinaryLike, publicKey: BinaryLike) {
     this.#registry = registry;
-    this.#credentialId = isU8a(credentialId) ? credentialId : stringToU8a(credentialId);
+    this.#credentialId = this.#registry.createType('Binary', credentialId).toU8a(true);
 
-    let raw: Uint8Array = isU8a(publicKey) ? publicKey : stringToU8a(publicKey);
-
-    if (raw.length === 64 || (raw.length === 65 && raw[0] === 0x04)) {
-      raw = u8aConcat(new Uint8Array([0x02 + (raw[raw.length - 1] & 0x01)]), raw.slice(raw.length - 64, raw.length - 32));
-    }
-
-    const accountId = this.#registry.createType('AccountId', compactAddLength(u8aConcat(new Uint8Array([0x80, 0x24]), raw)));
+    const key = this.#registry.createType('Binary', publicKey).toU8a();
+    const accountId = this.#registry.createType('AccountId', key);
 
     this.address = accountId.toHuman() as string;
     this.addressRaw = accountId.toU8a();
