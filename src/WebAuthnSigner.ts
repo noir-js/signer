@@ -1,10 +1,10 @@
 // Copyright (C) 2023 Haderech Pte. Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { HexString } from '@noir/util/types';
+import type { HexString } from '@pinot/util/types';
 import type { Registry, Signer, SignerPayloadRaw, SignerResult } from '@polkadot/types/types';
 
-import { compactAddLength, hexToU8a } from '@noir/util';
+import { compactAddLength, hexToU8a } from '@pinot/util';
 import { blake2AsU8a } from '@polkadot/util-crypto';
 
 let id = 0;
