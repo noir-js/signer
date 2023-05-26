@@ -4,8 +4,7 @@
 import type { HexString } from '@noir/util/types';
 import type { Registry, Signer, SignerPayloadRaw, SignerResult } from '@polkadot/types/types';
 
-import { Binary } from '@noir/types';
-import { compactAddLength, hexToU8a, u8aConcat } from '@noir/util';
+import { compactAddLength, hexToU8a } from '@noir/util';
 import { blake2AsU8a } from '@polkadot/util-crypto';
 
 let id = 0;
