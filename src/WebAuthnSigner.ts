@@ -21,8 +21,7 @@ export class WebAuthnSigner implements Signer {
     this.#registry = registry;
     this.#credentialId = this.#registry.createType('Binary', credentialId).toU8a(true);
 
-    const key = this.#registry.createType('Binary', publicKey).toU8a();
-    const accountId = this.#registry.createType('AccountId', key);
+    const accountId = this.#registry.createType('AccountId', publicKey);
 
     this.address = accountId.toHuman() as string;
     this.addressRaw = accountId.toU8a();
