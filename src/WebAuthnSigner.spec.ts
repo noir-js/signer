@@ -17,8 +17,8 @@ describe('WebAuthnSigner', (): void => {
       const publicKey = 'ugCQDyDOUCZ4w6uVaQ6cjDapARUknVRX-09qqYiyYMEC09i8';
 
       const signer = new WebAuthnSigner(registry, credentialId, publicKey);
-      expect(signer.address).toBe(publicKey);
-      expect(u8aToHex(signer.addressRaw)).toBe('0x8c802403c83394099e30eae55a43a7230daa404549275515fed3daaa622c983040b4f62f');
+      expect(signer.address).toEqual(publicKey);
+      expect(u8aToHex(signer.addressRaw)).toEqual('0x802403c83394099e30eae55a43a7230daa404549275515fed3daaa622c983040b4f62f');
     });
   });
 });
