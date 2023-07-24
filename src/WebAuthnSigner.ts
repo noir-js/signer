@@ -16,6 +16,7 @@ export class WebAuthnSigner implements Signer {
   readonly #credentialId: Uint8Array;
   readonly address: string;
   readonly addressRaw: Uint8Array;
+  rpId?: string;
 
   constructor (registry: Registry, credentialId: BinaryLike, publicKey: BinaryLike) {
     this.#registry = registry;
@@ -36,13 +37,16 @@ export class WebAuthnSigner implements Signer {
       throw new Error('WebAuthn is not supported in this environment');
     }
 
+    const rpId = this.rpId;
+
     const response = ((await navigator.credentials.get({
       publicKey: {
         allowCredentials: [{
           id: this.#credentialId,
           type: 'public-key'
         }],
-        challenge: blake2AsU8a(hexToU8a(data))
+        challenge: blake2AsU8a(hexToU8a(data)),
+        ...(rpId && { rpId })
       }
     })) as PublicKeyCredential).response as AuthenticatorAssertionResponse;
 
