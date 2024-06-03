@@ -4,8 +4,9 @@
 import type { HexString } from '@pinot/util/types';
 import type { Registry, Signer, SignerPayloadRaw, SignerResult } from '@polkadot/types/types';
 
-import { compactAddLength, hexToU8a } from '@pinot/util';
-import { blake2AsU8a } from '@polkadot/util-crypto';
+import { p256 } from '@noble/curves/p256';
+import { compactAddLength, hexToU8a, u8aCmp, u8aConcat } from '@pinot/util';
+import { blake2AsU8a, sha256AsU8a } from '@polkadot/util-crypto';
 
 let id = 0;
 
@@ -18,14 +19,14 @@ export class WebAuthnSigner implements Signer {
   readonly addressRaw: Uint8Array;
   rpId?: string;
 
-  constructor (registry: Registry, credentialId: BinaryLike, publicKey: BinaryLike) {
+  constructor (registry: Registry, credentialId: BinaryLike, accountId: BinaryLike) {
     this.#registry = registry;
     this.#credentialId = this.#registry.createType('Binary', credentialId).toU8a(true);
 
-    const accountId = this.#registry.createType('AccountId', publicKey);
+    const parsedAccountId = this.#registry.createType('AccountId', accountId);
 
-    this.address = accountId.toHuman() as string;
-    this.addressRaw = accountId.toU8a();
+    this.address = parsedAccountId.toHuman() as string;
+    this.addressRaw = parsedAccountId.toU8a();
   }
 
   public async signRaw ({ address, data }: SignerPayloadRaw): Promise<SignerResult> {
@@ -50,14 +51,30 @@ export class WebAuthnSigner implements Signer {
       }
     })) as PublicKeyCredential).response as AuthenticatorAssertionResponse;
 
+    const authenticatorData = new Uint8Array(response.authenticatorData);
+    const clientDataJSON = new Uint8Array(response.clientDataJSON);
+    const signedMessage = sha256AsU8a(u8aConcat(authenticatorData, sha256AsU8a(clientDataJSON)));
+    const signature = p256.Signature.fromDER(new Uint8Array(response.signature)).normalizeS();
+    const recoveryId = (() => {
+      for (let i = 0; i < 4; i++){
+        const recoveredSignature = signature.addRecoveryBit(i);
+        const publicKey = recoveredSignature.recoverPublicKey(signedMessage).toRawBytes();
+        const address = blake2AsU8a(publicKey);
+        if (u8aCmp(address, this.addressRaw) === 0) {
+          return i;
+        }
+      }
+      throw new Error('Unable to find valid recovery id');
+    })();
+
     return {
       id: ++id,
       signature: this.#registry.createType('ExtrinsicSignature', {
         /* eslint-disable sort-keys */
         WebAuthn: {
-          clientDataJSON: compactAddLength(new Uint8Array(response.clientDataJSON)),
-          authenticatorData: compactAddLength(new Uint8Array(response.authenticatorData)),
-          signature: compactAddLength(new Uint8Array(response.signature))
+          clientDataJSON: compactAddLength(clientDataJSON),
+          authenticatorData: compactAddLength(authenticatorData),
+          signature: u8aConcat(compactAddLength(signature.toCompactRawBytes()), Uint8Array.from([recoveryId]))
         }
         /* eslint-enable sort-keys */
       }).toHex()
