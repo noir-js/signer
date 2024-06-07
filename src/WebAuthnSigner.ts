@@ -74,7 +74,7 @@ export class WebAuthnSigner implements Signer {
         WebAuthn: {
           clientDataJSON: compactAddLength(clientDataJSON),
           authenticatorData: compactAddLength(authenticatorData),
-          signature: u8aConcat(compactAddLength(signature.toCompactRawBytes()), Uint8Array.from([recoveryId]))
+          signature: compactAddLength(u8aConcat(signature.toCompactRawBytes(), Uint8Array.from([recoveryId])))
         }
         /* eslint-enable sort-keys */
       }).toHex()
